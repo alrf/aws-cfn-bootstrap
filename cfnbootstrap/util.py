@@ -86,7 +86,14 @@ class EtagCheckedResponse(object):
             etag = None
 
         self._etag = etag
-        self._digest = hashlib.md5() if self._etag else NoOpDigest()
+        if self._etag:
+          try:
+            self._digest = hashlib.md5()
+          except ValueError:
+            # md5 isn't available in FIPS mode
+            self._digest = hashlib.md5(usedforsecurity=False)
+        else:
+          self._digest = NoOpDigest()
 
     def _check_digest(self):
         if not self._etag:
